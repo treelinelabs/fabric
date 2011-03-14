@@ -111,6 +111,25 @@ def test_hosts_stripped_env_hosts():
         pass
     eq_hosts(command, ['foo', 'bar'])
 
+
+spaced_roles = {
+    'r1': [' a ', ' b '],
+    'r2': ['b', 'c'],
+}
+
+@with_patched_object(
+    'fabric.state', 'env', _AttributeDict({'roledefs': spaced_roles})
+)
+def test_roles_stripped_env_hosts():
+    """
+    Make sure hosts defined in env.roles are cleaned of extra spaces
+    """
+    @roles('r1')
+    def command():
+        pass
+    eq_hosts(command, ['a', 'b'])
+
+
 def test_hosts_decorator_expands_single_iterable():
     """
     @hosts(iterable) should behave like @hosts(*iterable)

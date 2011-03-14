@@ -363,7 +363,7 @@ def _merge(hosts, roles):
             value = value()
         role_hosts += value
     # Return deduped combo of hosts and role_hosts
-    return list(set(_clean_hosts(hosts) + role_hosts))
+    return list(set(_clean_hosts(hosts + role_hosts)))
 
 
 def _clean_hosts(host_list):
