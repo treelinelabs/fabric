@@ -16,7 +16,7 @@ from utils import mock_streams
 
 def test_argument_parsing():
     for args, output in [
-        # Basic 
+        # Basic
         ('abc', ('abc', [], {}, [], [])),
         # Arg
         ('ab:c', ('ab', ['c'], {}, [], [])),
@@ -43,7 +43,7 @@ def test_argument_parsing():
 
 def eq_hosts(command, host_list):
     eq_(set(get_hosts(command, [], [])), set(host_list))
-    
+
 
 def test_hosts_decorator_by_itself():
     """
@@ -99,6 +99,17 @@ def test_hosts_decorator_overrides_env_hosts():
     eq_hosts(command, ['bar'])
     assert 'foo' not in get_hosts(command, [], [])
 
+
+@with_patched_object(
+    'fabric.state', 'env', {'hosts': [' foo ', 'bar '], 'roles': []}
+)
+def test_hosts_stripped_env_hosts():
+    """
+    Make sure hosts defined in env.hosts are cleaned of extra spaces
+    """
+    def command():
+        pass
+    eq_hosts(command, ['foo', 'bar'])
 
 def test_hosts_decorator_expands_single_iterable():
     """
