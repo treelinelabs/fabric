@@ -12,28 +12,38 @@ from StringIO import StringIO
 
 from fabric.api import *
 
-
-def exists(path, use_sudo=False, verbose=False):
-    """
-    Return True if given path exists on the current remote host.
-
-    If ``use_sudo`` is True, will use `sudo` instead of `run`.
-
-    `exists` will, by default, hide all output (including the run line, stdout,
-    stderr and any warning resulting from the file not existing) in order to
-    avoid cluttering output. You may specify ``verbose=True`` to change this
-    behavior.
-    """
-    func = use_sudo and sudo or run
-    cmd = 'test -e "%s"' % path
-    # If verbose, run normally
-    if verbose:
-        with settings(warn_only=True):
+def _generate_test_path_function(test_flag, function_name, truth_condition):
+    def generated_function(path, use_sudo=False, verbose=False):
+        func = use_sudo and sudo or run
+        cmd = 'test %s "%s"' % (test_flag, path)
+        # If verbose, run normally
+        if verbose:
+            with settings(warn_only=True):
+                return not func(cmd).failed
+        # Otherwise, be quiet
+        with settings(hide('everything'), warn_only=True):
             return not func(cmd).failed
-    # Otherwise, be quiet
-    with settings(hide('everything'), warn_only=True):
-        return not func(cmd).failed
+    generated_function.__doc__ = """
+                                 Return True if given path %s on the current remote host.
+                                 
+                                 If ``use_sudo`` is True, will use `sudo` instead of `run`.
+                                 
+                                 `%s` will, by default, hide all output (including the run line, stdout,
+                                 stderr and any warning resulting from the file not existing) in order to
+                                 avoid cluttering output. You may specify ``verbose=True`` to change this
+                                 behavior.
+                                 """ % (truth_condition, function_name)
+    generated_function.__name__ = function_name
+    return generated_function
 
+isdir = _generate_test_path_function("-d", "isdir", "is a directory")
+exists = _generate_test_path_function("-e", "exists", "exists")
+isfile = _generate_test_path_function("-f", "isfile", "is a regular file")
+readable = _generate_test_path_function("-r", "readable", "is readable")
+nonempty = _generate_test_path_function("-s", "nonempty", "has size greater than zero")
+writable = _generate_test_path_function("-w", "writeable", "is writable")
+executable = _generate_test_path_function("-x", "executable", "is executable")
+islink = _generate_test_path_function("-L", "islink", "is a symbolic link")
 
 def first(*args, **kwargs):
     """
